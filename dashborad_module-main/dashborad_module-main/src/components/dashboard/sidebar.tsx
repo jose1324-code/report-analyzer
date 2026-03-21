@@ -44,7 +44,7 @@ export function Sidebar() {
 
   const handleLogout = () => {
     clearUser()
-    window.location.href = 'http://localhost:8081'
+    window.location.href = process.env.NEXT_PUBLIC_LANDING_URL ?? 'http://localhost:8081'
   }
 
   return (

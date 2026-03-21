@@ -152,7 +152,7 @@ export default function SettingsPage() {
       await deleteAllUserData(user.uid)
       await deleteUser(firebaseUser)
       clearUser()
-      window.location.href = 'http://localhost:8081'
+      window.location.href = process.env.NEXT_PUBLIC_LANDING_URL ?? 'http://localhost:8081'
     } catch (e: any) {
       showToast(e.code === 'auth/wrong-password' ? 'Incorrect password' : 'Failed to delete account', false)
     }
@@ -164,7 +164,7 @@ export default function SettingsPage() {
     try {
       await deleteAllUserData(user.uid)
       clearUser()
-      window.location.href = 'http://localhost:8081'
+      window.location.href = process.env.NEXT_PUBLIC_LANDING_URL ?? 'http://localhost:8081'
     } catch {
       showToast('Failed to deactivate account', false)
     }

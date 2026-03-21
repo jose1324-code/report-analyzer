@@ -42,7 +42,7 @@ export function Navbar({ title }: NavbarProps) {
 
   const handleLogout = () => {
     clearUser()
-    window.location.href = 'http://localhost:8081'
+    window.location.href = process.env.NEXT_PUBLIC_LANDING_URL ?? 'http://localhost:8081'
   }
 
   const initials = (user?.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
