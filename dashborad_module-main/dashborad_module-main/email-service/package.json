@@ -1,0 +1,19 @@
+{
+  "name": "carenova-email-service",
+  "version": "1.0.0",
+  "description": "Daily health summary email notifications",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.2.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.13"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
