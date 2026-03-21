@@ -7,7 +7,7 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "./firebase";
 
-const REDIRECT_URL = "http://localhost:3000";
+const REDIRECT_URL = import.meta.env.VITE_DASHBOARD_URL ?? "http://localhost:3000";
 
 async function saveUserIfNew(uid: string, name: string, email: string, provider: string) {
   try {
@@ -53,23 +53,29 @@ async function saveUserProfile(uid: string, name: string, email: string) {
 }
 
 function redirectToDashboard(uid: string, name: string, email: string) {
-  const params = new URLSearchParams({ uid, name, email });
-  window.location.href = `${REDIRECT_URL}?${params.toString()}`;
+  const url = `${REDIRECT_URL}?${new URLSearchParams({ uid, name, email }).toString()}`;
+  // If running inside a popup (Google OAuth), redirect the opener and close
+  if (window.opener && !window.opener.closed) {
+    window.opener.location.href = url;
+    window.close();
+  } else {
+    window.location.href = url;
+  }
 }
 
 export async function signUp(name: string, email: string, password: string) {
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(user, { displayName: name });
-  await saveUserIfNew(user.uid, name, email, "email");
-  await saveUserProfile(user.uid, name, email);
+  saveUserIfNew(user.uid, name, email, "email");
+  saveUserProfile(user.uid, name, email);
   redirectToDashboard(user.uid, name, email);
 }
 
 export async function signIn(email: string, password: string) {
   const { user } = await signInWithEmailAndPassword(auth, email, password);
   const name = user.displayName ?? "";
-  await saveUserIfNew(user.uid, name, email, "email");
-  await saveUserProfile(user.uid, name, email);
+  saveUserIfNew(user.uid, name, email, "email");
+  saveUserProfile(user.uid, name, email);
   redirectToDashboard(user.uid, name, email);
 }
 
@@ -77,7 +83,7 @@ export async function signInWithGoogle() {
   const { user } = await signInWithPopup(auth, googleProvider);
   const name = user.displayName ?? "";
   const email = user.email ?? "";
-  await saveUserIfNew(user.uid, name, email, "google");
-  await saveUserProfile(user.uid, name, email);
+  saveUserIfNew(user.uid, name, email, "google");
+  saveUserProfile(user.uid, name, email);
   redirectToDashboard(user.uid, name, email);
 }

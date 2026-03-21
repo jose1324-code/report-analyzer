@@ -55,19 +55,27 @@ export default function DashboardPage() {
   const analyzedCount = reports.filter(r => r.status === 'Analyzed').length
   const latestMetric = metrics[metrics.length - 1]
   const prevMetric = metrics[metrics.length - 2]
-
-  const healthScore = latestMetric
-    ? Math.min(100, Math.round(
-        (latestMetric.steps / 100) * 0.2 +
-        (latestMetric.sleep >= 7 ? 20 : latestMetric.sleep * 2.5) +
-        (latestMetric.heartRate < 80 ? 20 : 10) +
-        (latestMetric.bloodPressureSystolic < 130 ? 20 : 10) +
-        (latestMetric.bloodSugar < 100 ? 20 : 10)
-      ))
-    : null
-
   const riskReports = reports.filter(r => r.analysis?.riskLevel === 'high').length
   const normalReports = reports.filter(r => r.analysis?.riskLevel === 'low').length
+
+  // Health score: 5 dimensions × 20 pts each
+  const healthScore = latestMetric ? Math.min(100, Math.round(
+    (latestMetric.steps >= 10000 ? 20 : latestMetric.steps >= 7000 ? 15 : latestMetric.steps >= 4000 ? 10 : 5) +
+    (latestMetric.sleep >= 7 && latestMetric.sleep <= 9 ? 20 : latestMetric.sleep >= 6 ? 14 : 8) +
+    (latestMetric.heartRate >= 60 && latestMetric.heartRate <= 80 ? 20 : latestMetric.heartRate <= 100 ? 12 : 5) +
+    (latestMetric.bloodPressureSystolic < 120 ? 20 : latestMetric.bloodPressureSystolic < 130 ? 15 : latestMetric.bloodPressureSystolic < 140 ? 8 : 3) +
+    (latestMetric.bloodSugar < 100 ? 20 : latestMetric.bloodSugar < 126 ? 13 : 5)
+  )) : null
+
+  const prevScore = prevMetric ? Math.min(100, Math.round(
+    (prevMetric.steps >= 10000 ? 20 : prevMetric.steps >= 7000 ? 15 : prevMetric.steps >= 4000 ? 10 : 5) +
+    (prevMetric.sleep >= 7 && prevMetric.sleep <= 9 ? 20 : prevMetric.sleep >= 6 ? 14 : 8) +
+    (prevMetric.heartRate >= 60 && prevMetric.heartRate <= 80 ? 20 : prevMetric.heartRate <= 100 ? 12 : 5) +
+    (prevMetric.bloodPressureSystolic < 120 ? 20 : prevMetric.bloodPressureSystolic < 130 ? 15 : prevMetric.bloodPressureSystolic < 140 ? 8 : 3) +
+    (prevMetric.bloodSugar < 100 ? 20 : prevMetric.bloodSugar < 126 ? 13 : 5)
+  )) : null
+
+  const scoreDelta = healthScore !== null && prevScore !== null ? healthScore - prevScore : null
 
   const stats = [
     {
@@ -90,37 +98,41 @@ export default function DashboardPage() {
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
       trend: healthScore !== null
-        ? healthScore >= 70 ? 'Good condition' : healthScore >= 40 ? 'Moderate' : 'Needs attention'
+        ? scoreDelta !== null
+          ? scoreDelta > 0 ? `+${scoreDelta} vs last entry` : scoreDelta < 0 ? `${scoreDelta} vs last entry` : 'No change'
+          : healthScore >= 70 ? 'Good condition' : healthScore >= 40 ? 'Moderate' : 'Needs attention'
         : 'Log health metrics',
-      trendIcon: healthScore !== null && healthScore >= 70 ? TrendingUp : TrendingDown,
-      trendColor: healthScore !== null && healthScore >= 70 ? 'text-green-500' : 'text-orange-500',
+      trendIcon: scoreDelta !== null ? (scoreDelta >= 0 ? TrendingUp : TrendingDown) : (healthScore !== null && healthScore >= 70 ? TrendingUp : TrendingDown),
+      trendColor: scoreDelta !== null ? (scoreDelta >= 0 ? 'text-green-500' : 'text-red-500') : (healthScore !== null && healthScore >= 70 ? 'text-green-500' : 'text-orange-500'),
       href: '/health-trends',
     },
     {
-      title: 'Avg Heart Rate',
+      title: 'Heart Rate',
       value: latestMetric ? `${latestMetric.heartRate} bpm` : '—',
       sub: prevMetric ? `Was ${prevMetric.heartRate} bpm` : 'No previous data',
       icon: Activity,
       iconBg: 'bg-red-100',
       iconColor: 'text-red-500',
       trend: latestMetric && prevMetric
-        ? latestMetric.heartRate < prevMetric.heartRate ? 'Improved ↓' : 'Increased ↑'
+        ? latestMetric.heartRate < prevMetric.heartRate ? `↓ ${prevMetric.heartRate - latestMetric.heartRate} bpm` : latestMetric.heartRate > prevMetric.heartRate ? `↑ ${latestMetric.heartRate - prevMetric.heartRate} bpm` : 'No change'
         : 'Track vitals',
-      trendIcon: latestMetric && prevMetric && latestMetric.heartRate < prevMetric.heartRate ? TrendingDown : TrendingUp,
+      trendIcon: latestMetric && prevMetric && latestMetric.heartRate <= prevMetric.heartRate ? TrendingDown : TrendingUp,
       trendColor: latestMetric && prevMetric && latestMetric.heartRate < prevMetric.heartRate ? 'text-green-500' : 'text-orange-500',
       href: '/health-trends',
     },
     {
-      title: 'Activity Logs',
-      value: activities.length,
-      sub: 'Across all modules',
+      title: 'Blood Sugar',
+      value: latestMetric ? `${latestMetric.bloodSugar} mg/dL` : '—',
+      sub: prevMetric ? `Was ${prevMetric.bloodSugar} mg/dL` : 'No previous data',
       icon: Brain,
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-600',
-      trend: activities[0] ? `Last: ${activities[0].title}` : 'No activity yet',
-      trendIcon: TrendingUp,
-      trendColor: 'text-purple-500',
-      href: '/report-analyzer',
+      trend: latestMetric && prevMetric
+        ? latestMetric.bloodSugar < prevMetric.bloodSugar ? `↓ ${prevMetric.bloodSugar - latestMetric.bloodSugar}` : latestMetric.bloodSugar > prevMetric.bloodSugar ? `↑ ${latestMetric.bloodSugar - prevMetric.bloodSugar}` : 'No change'
+        : latestMetric ? (latestMetric.bloodSugar < 100 ? 'Normal range' : 'Above normal') : 'Log metrics',
+      trendIcon: latestMetric && prevMetric && latestMetric.bloodSugar <= prevMetric.bloodSugar ? TrendingDown : TrendingUp,
+      trendColor: latestMetric && prevMetric && latestMetric.bloodSugar < prevMetric.bloodSugar ? 'text-green-500' : 'text-orange-500',
+      href: '/health-trends',
     },
   ]
 
@@ -183,23 +195,33 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 {[
-                  { label: 'Heart Rate', value: `${latestMetric.heartRate} bpm`, ok: latestMetric.heartRate < 100 },
-                  { label: 'Blood Pressure', value: `${latestMetric.bloodPressureSystolic}/${latestMetric.bloodPressureDiastolic}`, ok: latestMetric.bloodPressureSystolic < 130 },
-                  { label: 'Blood Sugar', value: `${latestMetric.bloodSugar} mg/dL`, ok: latestMetric.bloodSugar < 100 },
-                  { label: 'Weight', value: `${latestMetric.weight} kg`, ok: true },
-                  { label: 'Steps Today', value: latestMetric.steps.toLocaleString(), ok: latestMetric.steps >= 7000 },
-                  { label: 'Sleep', value: `${latestMetric.sleep} hrs`, ok: latestMetric.sleep >= 7 },
-                  { label: 'Calories', value: `${latestMetric.calories} kcal`, ok: true },
-                ].map(item => (
-                  <div key={item.label} className={`p-3 rounded-xl border-2 ${item.ok ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
-                    <p className="text-xs text-gray-500 mb-1">{item.label}</p>
-                    <p className="text-sm font-bold text-gray-900">{item.value}</p>
-                    <div className={`flex items-center gap-1 mt-1 text-xs ${item.ok ? 'text-green-600' : 'text-orange-600'}`}>
-                      {item.ok ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                      {item.ok ? 'Normal' : 'Watch'}
+                  { label: 'Heart Rate', value: `${latestMetric.heartRate} bpm`, ok: latestMetric.heartRate >= 60 && latestMetric.heartRate <= 100, delta: prevMetric ? latestMetric.heartRate - prevMetric.heartRate : null, lowerIsBetter: true },
+                  { label: 'Blood Pressure', value: `${latestMetric.bloodPressureSystolic}/${latestMetric.bloodPressureDiastolic}`, ok: latestMetric.bloodPressureSystolic < 130, delta: prevMetric ? latestMetric.bloodPressureSystolic - prevMetric.bloodPressureSystolic : null, lowerIsBetter: true },
+                  { label: 'Blood Sugar', value: `${latestMetric.bloodSugar} mg/dL`, ok: latestMetric.bloodSugar < 100, delta: prevMetric ? latestMetric.bloodSugar - prevMetric.bloodSugar : null, lowerIsBetter: true },
+                  { label: 'Weight', value: `${latestMetric.weight} kg`, ok: true, delta: prevMetric ? latestMetric.weight - prevMetric.weight : null, lowerIsBetter: true },
+                  { label: 'Steps Today', value: latestMetric.steps.toLocaleString(), ok: latestMetric.steps >= 7000, delta: prevMetric ? latestMetric.steps - prevMetric.steps : null, lowerIsBetter: false },
+                  { label: 'Sleep', value: `${latestMetric.sleep} hrs`, ok: latestMetric.sleep >= 7, delta: prevMetric ? latestMetric.sleep - prevMetric.sleep : null, lowerIsBetter: false },
+                  { label: 'Calories', value: `${latestMetric.calories} kcal`, ok: true, delta: prevMetric ? latestMetric.calories - prevMetric.calories : null, lowerIsBetter: false },
+                ].map(item => {
+                  const improved = item.delta !== null ? (item.lowerIsBetter ? item.delta < 0 : item.delta > 0) : null
+                  return (
+                    <div key={item.label} className={`p-3 rounded-xl border-2 ${item.ok ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
+                      <p className="text-xs text-gray-500 mb-1">{item.label}</p>
+                      <p className="text-sm font-bold text-gray-900">{item.value}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <div className={`flex items-center gap-1 text-xs ${item.ok ? 'text-green-600' : 'text-orange-600'}`}>
+                          {item.ok ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                          {item.ok ? 'Normal' : 'Watch'}
+                        </div>
+                        {item.delta !== null && item.delta !== 0 && (
+                          <span className={`text-xs font-medium ${improved ? 'text-green-600' : 'text-red-500'}`}>
+                            {item.delta > 0 ? '+' : ''}{typeof item.delta === 'number' && !Number.isInteger(item.delta) ? item.delta.toFixed(1) : item.delta}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

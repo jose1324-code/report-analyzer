@@ -298,6 +298,31 @@ export const deleteCareTeamMember = async (userId: string, memberId: string) => 
   await deleteDoc(doc(db, 'userProfiles', userId, 'careTeam', memberId))
 }
 
+// ==================== SHARE TOKENS ====================
+export interface ShareToken {
+  userId: string
+  reportId: string
+  createdAt: Timestamp
+  expiresAt: Timestamp
+}
+
+export const saveShareToken = async (token: string, data: Omit<ShareToken, 'createdAt' | 'expiresAt'>) => {
+  const now = Timestamp.now()
+  await setDoc(doc(db, 'shareTokens', token), {
+    ...data,
+    createdAt: now,
+    expiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000),
+  })
+}
+
+export const getShareToken = async (token: string): Promise<ShareToken | null> => {
+  const snap = await getDoc(doc(db, 'shareTokens', token))
+  if (!snap.exists()) return null
+  const data = snap.data() as ShareToken
+  if (data.expiresAt.toMillis() < Date.now()) return null
+  return data
+}
+
 // ==================== DELETE ALL USER DATA ====================
 export const deleteAllUserData = async (userId: string) => {
   const subcollections = ['healthMetrics', 'medicalReports', 'activityLogs', 'settings', 'chatConversations', 'symptomChecks', 'careTeam']
