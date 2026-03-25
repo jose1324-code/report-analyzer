@@ -40,6 +40,16 @@ type Medicine = {
   }
 }
 
+type AlternativeMed = {
+  name: string
+  manufacturer: string
+  price: string
+  composition: string
+  packSize: string
+  type: string
+  reason: string
+}
+
 type InteractionResult = {
   found: boolean
   drug1?: string
@@ -102,6 +112,8 @@ export default function DrugInfoPage() {
   const [drug2, setDrug2] = useState('')
   const [interactionResult, setInteractionResult] = useState<InteractionResult | null>(null)
   const [loadingInteraction, setLoadingInteraction] = useState(false)
+  const [alternatives, setAlternatives] = useState<AlternativeMed[]>([])
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const suggestRef = useRef<HTMLDivElement>(null)
@@ -130,6 +142,7 @@ export default function DrugInfoPage() {
     setLoadingDrug(true)
     setDrugError('')
     setMedicine(null)
+    setAlternatives([])
     setShowSuggestions(false)
     try {
       const res = await fetch(`/api/drugbank?action=llm&name=${encodeURIComponent(name)}`)
@@ -140,6 +153,20 @@ export default function DrugInfoPage() {
       setDrugError('Failed to fetch medicine details.')
     } finally {
       setLoadingDrug(false)
+    }
+  }
+
+  const fetchAlternatives = async (name: string) => {
+    setLoadingAlternatives(true)
+    setAlternatives([])
+    try {
+      const res = await fetch(`/api/drugbank?action=alternatives&name=${encodeURIComponent(name)}`)
+      const data = await res.json()
+      setAlternatives(data.alternatives || [])
+    } catch {
+      setAlternatives([])
+    } finally {
+      setLoadingAlternatives(false)
     }
   }
 
@@ -327,6 +354,7 @@ export default function DrugInfoPage() {
                 <TabsTrigger value="interactions">Interactions</TabsTrigger>
                 <TabsTrigger value="pharmacology">Pharmacology</TabsTrigger>
                 <TabsTrigger value="storage">Storage & Safety</TabsTrigger>
+                <TabsTrigger value="alternatives">Alternatives</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview">
@@ -440,6 +468,71 @@ export default function DrugInfoPage() {
                   content={medicine.llm?.storage || 'Not available'}
                   color="blue"
                 />
+              </TabsContent>
+
+              <TabsContent value="alternatives">
+                <div className="space-y-4">
+                  {alternatives.length === 0 && !loadingAlternatives && (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                      <Pill className="w-10 h-10 text-gray-300" />
+                      <p className="text-sm text-gray-500">Click below to find alternative medicines</p>
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700 gap-2"
+                        onClick={() => fetchAlternatives(medicine.name)}
+                      >
+                        <Sparkles className="w-4 h-4" /> Find Alternatives
+                      </Button>
+                    </div>
+                  )}
+                  {loadingAlternatives && (
+                    <div className="flex flex-col items-center py-10 gap-3">
+                      <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                      <p className="text-sm text-gray-500">Gemini AI is finding alternatives...</p>
+                    </div>
+                  )}
+                  {alternatives.length > 0 && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                          {alternatives.length} alternatives found by Gemini AI
+                        </p>
+                        <Button size="sm" variant="outline" onClick={() => fetchAlternatives(medicine.name)} className="gap-1 text-xs">
+                          <Loader2 className="w-3 h-3" /> Refresh
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {alternatives.map((alt, i) => (
+                          <Card key={i} className="border hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSearchQuery(alt.name); fetchMedicine(alt.name) }}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                                    <Pill className="w-5 h-5 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-gray-900 text-sm">{alt.name}</p>
+                                    <p className="text-xs text-gray-400">{alt.manufacturer}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 text-green-700 font-bold text-sm shrink-0">
+                                  <IndianRupee className="w-3.5 h-3.5" />{alt.price}
+                                </div>
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                <Badge className="bg-indigo-100 text-indigo-700 text-xs">{alt.composition}</Badge>
+                                <Badge className="bg-gray-100 text-gray-600 text-xs">{alt.packSize}</Badge>
+                                <Badge className="bg-blue-100 text-blue-700 text-xs capitalize">{alt.type}</Badge>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-2 italic">{alt.reason}</p>
+                              <p className="text-xs text-blue-600 mt-2 font-medium">Click to view details →</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           </>

@@ -48,7 +48,7 @@ export function Navbar({ title }: NavbarProps) {
   const initials = (user?.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-30 flex items-center px-6 shadow-sm">
+    <header className="fixed top-0 right-0 left-0 md:left-16 lg:left-64 h-16 bg-white border-b border-gray-200 z-30 flex items-center px-6 shadow-sm">
       <div className="flex-1">
         <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
       </div>

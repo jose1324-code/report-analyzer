@@ -13,7 +13,7 @@ export function DashboardLayout({ children, title = 'Dashboard' }: DashboardLayo
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <Navbar title={title} />
-      <main className="ml-64 pt-16 min-h-screen">
+      <main className="pt-16 min-h-screen md:ml-16 lg:ml-64">
         <div className="p-6">
           {children}
         </div>

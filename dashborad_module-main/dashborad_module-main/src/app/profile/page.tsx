@@ -15,12 +15,12 @@ import { db, storage } from '@/lib/firebase'
 import { useUser } from '@/hooks/use-user'
 
 async function loadProfile(uid: string) {
-  const snap = await getDoc(doc(db, 'userProfiles', uid))
+  const snap = await getDoc(doc(db, 'users', uid))
   return snap.exists() ? snap.data() : null
 }
 
 async function persistProfile(uid: string, data: Record<string, any>) {
-  const ref2 = doc(db, 'userProfiles', uid)
+  const ref2 = doc(db, 'users', uid)
   const snap = await getDoc(ref2)
   await setDoc(ref2, {
     ...data,

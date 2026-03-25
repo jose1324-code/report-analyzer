@@ -12,7 +12,7 @@ console.log("[SERVER] Initializing Firebase...");
 initializeFirebase();
 
 const JWT_SECRET = process.env.JWT_SECRET!;
-const DASHBOARD_URL = "http://localhost:8081";
+const DASHBOARD_URL = process.env.VITE_DASHBOARD_URL || "http://localhost:3000";
 
 interface User {
   id: string;
@@ -57,7 +57,7 @@ export function createServer() {
 
   app.use(
     cors({
-      origin: ["http://localhost:8081"],
+      origin: ["http://localhost:8081", "http://localhost:3000"],
       credentials: true,
     })
   );

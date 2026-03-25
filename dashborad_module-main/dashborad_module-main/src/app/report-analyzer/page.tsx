@@ -102,7 +102,11 @@ export default function ReportAnalyzerPage() {
 
   const handleAnalyze = async () => {
     if (!uploadedFile) return
-    
+    if (!user?.uid) {
+      toast({ title: 'Not logged in', description: 'Please log in to analyze reports.', variant: 'destructive' })
+      return
+    }
+
     setIsAnalyzing(true)
     setOcrProgress(0)
     

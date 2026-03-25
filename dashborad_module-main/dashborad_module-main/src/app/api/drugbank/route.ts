@@ -123,6 +123,74 @@ Respond ONLY with a valid JSON object, no markdown, no code block, no extra text
       }
     }
 
+    // ── Alternatives (Gemini-powered) ──────────────────────────────────────
+    if (action === 'alternatives') {
+      const name = (searchParams.get('name') || '').toLowerCase().trim()
+      const med = medicines.find(m => m.name.toLowerCase() === name)
+      if (!med) return NextResponse.json({ alternatives: [] })
+
+      const comp1 = med.short_composition1?.trim()
+      const comp2 = med.short_composition2?.trim()
+      const composition = [comp1, comp2].filter(Boolean).join(' + ')
+
+      // find same-composition medicines from DB first
+      const dbAlts = medicines
+        .filter(m =>
+          m.name.toLowerCase() !== name &&
+          m.short_composition1?.trim() === comp1 &&
+          !m.Is_discontinued
+        )
+        .slice(0, 6)
+        .map(m => ({
+          name: m.name,
+          manufacturer: m.manufacturer_name,
+          price: m['price(₹)'],
+          composition: [m.short_composition1, m.short_composition2].filter(Boolean).join(' + '),
+          packSize: m.pack_size_label,
+          type: m.type,
+          reason: 'Same active composition from Indian medicine database'
+        }))
+
+      if (dbAlts.length >= 4) return NextResponse.json({ alternatives: dbAlts })
+
+      // supplement with Gemini suggestions
+      const prompt = `You are a clinical pharmacist. Suggest alternative medicines for the following Indian medicine.
+
+Medicine: ${med.name}
+Composition: ${composition}
+Manufacturer: ${med.manufacturer_name}
+Type: ${med.type}
+
+Provide 6 alternative medicines available in India with the same or similar therapeutic effect.
+Respond ONLY with valid JSON, no markdown:
+{
+  "alternatives": [
+    {
+      "name": "Medicine brand name",
+      "manufacturer": "Manufacturer name",
+      "price": "approximate price in rupees as number string",
+      "composition": "active ingredient(s)",
+      "packSize": "pack size e.g. 10 tablets",
+      "type": "tablet or syrup or injection etc",
+      "reason": "one sentence why this is a good alternative"
+    }
+  ]
+}`
+
+      try {
+        const raw = await callGemini(prompt)
+        const jsonMatch = raw.match(/\{[\s\S]*\}/)
+        if (!jsonMatch) throw new Error('No JSON')
+        const result = JSON.parse(repairJson(jsonMatch[0]))
+        const geminiAlts = result.alternatives || []
+        // merge DB alts first, then Gemini
+        const merged = [...dbAlts, ...geminiAlts].slice(0, 8)
+        return NextResponse.json({ alternatives: merged })
+      } catch {
+        return NextResponse.json({ alternatives: dbAlts })
+      }
+    }
+
     // ── Interaction (Gemini-powered) ─────────────────────────────────────────
     if (action === 'interaction') {
       const drug1 = (searchParams.get('drug1') || '').toLowerCase().trim()

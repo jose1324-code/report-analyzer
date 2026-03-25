@@ -53,7 +53,7 @@ export function useUser() {
     setUser(stored)
 
     // 3. Enrich with Firestore profile (name, photoURL)
-    getDoc(doc(db, 'userProfiles', stored.uid))
+    getDoc(doc(db, 'users', stored.uid))
       .then(snap => {
         if (snap.exists()) {
           const data = snap.data()

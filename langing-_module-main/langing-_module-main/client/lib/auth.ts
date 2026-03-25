@@ -23,7 +23,7 @@ async function saveUserIfNew(uid: string, name: string, email: string, provider:
 
 async function saveUserProfile(uid: string, name: string, email: string) {
   try {
-    const ref = doc(db, "userProfiles", uid);
+    const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
     // Only set name/email if profile doesn't exist yet — don't overwrite user edits
     if (!snap.exists()) {
