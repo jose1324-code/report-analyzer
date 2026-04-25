@@ -17,17 +17,16 @@ const menuItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Medical Report Analyzer', href: '/report-analyzer', icon: FileText },
   { name: 'Drug Information', href: '/drug-info', icon: Pill },
-  { name: 'Drug Price Detection', href: '/drug-pricing', icon: DollarSign },
+  { name: 'Price Detection', href: '/drug-pricing', icon: DollarSign },
   { name: 'Health Risk Prediction', href: '/risk-prediction', icon: Activity },
   { name: 'Mental Health Chatbot', href: '/chatbot', icon: MessageCircle },
   { name: 'Health Trends Analysis', href: '/health-trends', icon: TrendingUp },
-  { name: 'Doctor Access', href: '/doctor-access', icon: QrCode },
+  { name: 'Patient Dashboard', href: '/patient-dashboard', icon: Users },
 ]
 
 const bottomMenuItems = [
   { name: 'My Profile', href: '/profile', icon: User },
   { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Admin: All Users', href: '/admin', icon: Users },
 ]
 
 export function Sidebar() {
@@ -55,7 +54,7 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
+        <nav className="fldoex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
             {menuItems.map(item => (
               <li key={item.href}>

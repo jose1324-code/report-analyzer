@@ -15,7 +15,7 @@ interface Message {
 }
 
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: '1',
       role: 'assistant',
@@ -96,7 +96,7 @@ export default function ChatbotPage() {
   }
 
   const clearChat = () => {
-    setMessages([
+    setMessages(() => [
       {
         id: '1',
         role: 'assistant',
@@ -151,15 +151,16 @@ export default function ChatbotPage() {
         </Card>
 
         {/* Main Chat Area */}
+        <div className='max-w-6x1 mx-auto'>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-396">
           <div className="lg:col-span-3">
-            <Card className="h-[600px] flex  flex-col">
-              <CardHeader className="border-b bg-gradient-to-r h-20 from-blue-600 to-teal-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-3">
+            <Card className="h-[600px] flex flex-col p-0 overflow-hidden">
+              <CardHeader className="border-b  bg-gradient-to-r h-20 from-blue-600 to-teal-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <Bot className="w-5 h-5" />
+                    <Bot className="w-5 h-10" />
                   </div>
-                  <div>
+                  <div className="flex flex-col h-19 justify-center">
                     <p>Medical Assistant</p>
                     <p className="text-sm  font-normal text-blue-200">AI-Powered Health Support</p>
                   </div>
@@ -185,7 +186,7 @@ export default function ChatbotPage() {
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <p className={`text-xs mt-1 ${
+                      <p suppressHydrationWarning className={`text-xs mt-1 ${
                         message.role === 'user' ? 'text-blue-200' : 'text-gray-400'
                       }`}>
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -235,6 +236,7 @@ export default function ChatbotPage() {
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </DashboardLayout>
   )

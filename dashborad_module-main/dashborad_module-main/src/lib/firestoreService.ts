@@ -637,3 +637,47 @@ export const getCareTeam = async (uid: string): Promise<CareTeamMember[]> => {
 export const deleteCareTeamMember = async (uid: string, memberId: string) => {
   await deleteDoc(doc(db, 'users', uid, 'careTeam', memberId))
 }
+
+// =============================================================================
+// PATIENT PROFILES  (Doctor Access System)
+// =============================================================================
+export interface PatientProfile {
+  patientId: string
+  name: string
+  age: number
+  condition: string
+  bloodType?: string
+  email?: string
+}
+
+export const savePatientProfile = async (
+  patientId: string,
+  data: Omit<PatientProfile, 'patientId'>
+) => {
+  await setDoc(doc(db, 'patients', patientId), { ...data, patientId }, { merge: true })
+}
+
+export const getPatientProfile = async (patientId: string): Promise<PatientProfile | null> => {
+  const snap = await getDoc(doc(db, 'patients', patientId))
+  return snap.exists() ? (snap.data() as PatientProfile) : null
+}
+
+// =============================================================================
+// PATIENT ACCESS CONTROL  (time-based)
+// =============================================================================
+export interface PatientAccess {
+  allowed: boolean
+  expiresAt: Timestamp
+}
+
+export const setPatientAccess = async (patientId: string, hours = 24) => {
+  await setDoc(doc(db, 'access', patientId), {
+    allowed: true,
+    expiresAt: Timestamp.fromMillis(Date.now() + hours * 60 * 60 * 1000),
+  })
+}
+
+export const getPatientAccess = async (patientId: string): Promise<PatientAccess | null> => {
+  const snap = await getDoc(doc(db, 'access', patientId))
+  return snap.exists() ? (snap.data() as PatientAccess) : null
+}

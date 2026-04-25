@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8081,
     strictPort: false,
     fs: {
-      allow: [  "D:/programming languages/jr project/joseline/langing-_module-main/langing-_module-main"],
+      allow: [path.resolve(__dirname)],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },

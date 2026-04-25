@@ -63,11 +63,30 @@ function redirectToDashboard(uid: string, name: string, email: string) {
   }
 }
 
+async function sendWelcomeEmail(name: string, email: string) {
+  try {
+    const res = await fetch(`${REDIRECT_URL}/api/send-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: email,
+        subject: "Welcome to CareNova! 🎉",
+        text: `Hi ${name},\n\nWelcome to CareNova! Your account has been successfully created.\n\nYou can now access all health features including:\n- Medical Report Analyzer\n- Drug Price Detection\n- Risk Prediction\n- Health Trends\n- AI Medical Chatbot\n\nStay healthy!\nThe CareNova Team`,
+      }),
+    });
+    const data = await res.json();
+    console.log("[Welcome Email]", data);
+  } catch (err) {
+    console.warn("[Welcome Email] Failed:", err);
+  }
+}
+
 export async function signUp(name: string, email: string, password: string) {
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(user, { displayName: name });
   saveUserIfNew(user.uid, name, email, "email");
   saveUserProfile(user.uid, name, email);
+  sendWelcomeEmail(name, email);
   redirectToDashboard(user.uid, name, email);
 }
 
